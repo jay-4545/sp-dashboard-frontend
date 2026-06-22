@@ -6,16 +6,30 @@ import { PaginatedResponse, FinancialEvent, FinancePnl, SyncJob } from '@/types'
 import { useAccountStore } from '@/store/accountStore';
 import { useFilterStore } from '@/store/filterStore';
 
-export function useFinanceEvents(page = 1) {
+interface FinanceEventsParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
+export function useFinanceEvents(params: FinanceEventsParams = {}) {
   const selectedAccountId = useAccountStore((s) => s.selectedAccountId);
   const { startDate, endDate } = useFilterStore();
 
   return useQuery({
-    queryKey: ['finance-events', selectedAccountId, startDate, endDate, page],
+    queryKey: ['finance-events', selectedAccountId, startDate, endDate, params],
     queryFn: async () => {
-      const params: Record<string, string | number> = { startDate, endDate, page, limit: 20 };
-      if (selectedAccountId) params.accountId = selectedAccountId;
-      const { data } = await api.get<PaginatedResponse<FinancialEvent>>('/api/finance/events', { params });
+      const queryParams: Record<string, string | number> = {
+        startDate,
+        endDate,
+        page: params.page || 1,
+        limit: params.limit || 20,
+      };
+      if (selectedAccountId) queryParams.accountId = selectedAccountId;
+      if (params.search) queryParams.search = params.search;
+      const { data } = await api.get<PaginatedResponse<FinancialEvent>>('/api/finance/events', {
+        params: queryParams,
+      });
       return data;
     },
   });

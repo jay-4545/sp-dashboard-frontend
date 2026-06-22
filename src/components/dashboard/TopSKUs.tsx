@@ -1,5 +1,6 @@
 'use client';
 
+import { Paper, Typography, Box, Skeleton } from '@mui/material';
 import { formatCurrency, formatNumber } from '@/lib/utils';
 import { DashboardSummary } from '@/types';
 
@@ -12,37 +13,55 @@ export function TopSKUs({ data, isLoading }: TopSKUsProps) {
   const skus = data?.topSkus || [];
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h3 className="mb-4 text-sm font-semibold text-slate-700">Top SKUs</h3>
+    <Paper variant="outlined" sx={{ p: 2, height: '100%' }}>
+      <Typography variant="subtitle2"  gutterBottom sx={{ fontWeight: 600 }}>
+        Top SKUs
+      </Typography>
       {isLoading ? (
-        <div className="space-y-3">
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-8 animate-pulse rounded bg-slate-100" />
+            <Skeleton key={i} height={40} />
           ))}
-        </div>
+        </Box>
       ) : skus.length === 0 ? (
-        <p className="text-sm text-slate-400">No SKU data available</p>
+        <Typography variant="body2" color="text.secondary">
+          No SKU data available
+        </Typography>
       ) : (
-        <div className="space-y-2">
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           {skus.map((sku, i) => (
-            <div
+            <Box
               key={i}
-              className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2"
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                bgcolor: 'grey.50',
+                borderRadius: 1,
+                px: 1.5,
+                py: 1,
+              }}
             >
-              <div>
-                <p className="font-mono text-sm font-medium text-slate-700">{sku.sku || '—'}</p>
-                <p className="text-xs text-slate-400">{sku.asin}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm font-semibold text-slate-800">
+              <Box>
+                <Typography variant="body2"   sx={{ fontWeight: 600, fontFamily: 'monospace' }}>
+                  {sku.sku || '—'}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {sku.asin}
+                </Typography>
+              </Box>
+              <Box sx={{ textAlign: 'right' }}>
+                <Typography variant="body2"  sx={{ fontWeight: 600 }}>
                   {formatCurrency(sku.totalRevenue)}
-                </p>
-                <p className="text-xs text-slate-500">{formatNumber(sku.totalQty)} units</p>
-              </div>
-            </div>
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {formatNumber(sku.totalQty)} units
+                </Typography>
+              </Box>
+            </Box>
           ))}
-        </div>
+        </Box>
       )}
-    </div>
+    </Paper>
   );
 }

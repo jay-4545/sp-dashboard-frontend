@@ -1,10 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { ColumnDef } from '@tanstack/react-table';
+import { Typography, FormControlLabel, Checkbox } from '@mui/material';
 import { useInventory } from '@/hooks/useInventory';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { DataTable } from '@/components/shared/DataTable';
-import { formatDate, formatNumber, cn } from '@/lib/utils';
+import { formatDate, formatNumber } from '@/lib/utils';
 import { InventorySnapshot } from '@/types';
 
 const columns: ColumnDef<InventorySnapshot, unknown>[] = [
@@ -12,14 +15,18 @@ const columns: ColumnDef<InventorySnapshot, unknown>[] = [
     accessorKey: 'sku',
     header: 'SKU',
     cell: ({ getValue }) => (
-      <span className="font-mono text-xs">{getValue() as string || '—'}</span>
+      <Typography variant="caption"  sx={{ fontFamily: 'monospace' }}>
+        {(getValue() as string) || '—'}
+      </Typography>
     ),
   },
   {
     accessorKey: 'asin',
     header: 'ASIN',
     cell: ({ getValue }) => (
-      <span className="font-mono text-xs text-slate-500">{getValue() as string || '—'}</span>
+      <Typography variant="caption"  color="text.secondary" sx={{ fontFamily: 'monospace' }}>
+        {(getValue() as string) || '—'}
+      </Typography>
     ),
   },
   {
@@ -32,15 +39,11 @@ const columns: ColumnDef<InventorySnapshot, unknown>[] = [
     header: 'Sellable',
     cell: ({ row }) => {
       const qty = row.original.sellable_qty;
+      const color = qty < 10 ? 'error.main' : qty < 50 ? 'warning.main' : 'success.main';
       return (
-        <span
-          className={cn(
-            'font-semibold',
-            qty < 10 ? 'text-red-600' : qty < 50 ? 'text-yellow-600' : 'text-green-600'
-          )}
-        >
+        <Typography variant="body2"  color={color} sx={{ fontWeight: 600 }}>
           {formatNumber(qty)}
-        </span>
+        </Typography>
       );
     },
   },
@@ -68,56 +71,45 @@ const columns: ColumnDef<InventorySnapshot, unknown>[] = [
 
 export default function InventoryPage() {
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
   const [lowStock, setLowStock] = useState(false);
-  const { data, isLoading } = useInventory({ page, lowStock });
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search);
+  const { data, isLoading } = useInventory({ page, limit, lowStock, search: debouncedSearch || undefined });
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <label className="flex items-center gap-2 text-sm text-slate-600">
-          <input
-            type="checkbox"
-            checked={lowStock}
-            onChange={(e) => {
-              setLowStock(e.target.checked);
-              setPage(1);
-            }}
-            className="rounded border-slate-300"
-          />
-          Show low stock only (&lt; 10 units)
-        </label>
-      </div>
-
-      <DataTable
-        data={data?.data || []}
-        columns={columns}
-        isLoading={isLoading}
-        emptyMessage="No inventory snapshots. Data syncs hourly once Amazon credentials are configured."
-      />
-
-      {data && data.pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between text-sm text-slate-500">
-          <span>
-            Page {data.pagination.page} of {data.pagination.totalPages}
-          </span>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="rounded-lg border border-slate-200 px-3 py-1.5 hover:bg-white disabled:opacity-40"
-            >
-              Previous
-            </button>
-            <button
-              onClick={() => setPage((p) => p + 1)}
-              disabled={page >= data.pagination.totalPages}
-              className="rounded-lg border border-slate-200 px-3 py-1.5 hover:bg-white disabled:opacity-40"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+    <DataTable
+      data={data?.data || []}
+      columns={columns}
+      isLoading={isLoading}
+      pagination={data?.pagination}
+      onPageChange={setPage}
+      limit={limit}
+      onLimitChange={(v) => { setLimit(v); setPage(1); }}
+      search={search}
+      onSearchChange={(v) => { setSearch(v); setPage(1); }}
+      searchPlaceholder="Search SKU, ASIN, FNSKU..."
+      toolbar={
+        <FormControlLabel
+          control={
+            <Checkbox
+              size="small"
+              checked={lowStock}
+              onChange={(e) => { setLowStock(e.target.checked); setPage(1); }}
+            />
+          }
+          label={<Typography variant="caption">Low stock only (&lt; 10)</Typography>}
+        />
+      }
+      emptyMessage={
+        <>
+          No inventory snapshots.{' '}
+          <Typography component={Link} href="/accounts" variant="body2" color="primary" sx={{ display: 'inline' }}>
+            Connect an account
+          </Typography>{' '}
+          and sync inventory.
+        </>
+      }
+    />
   );
 }

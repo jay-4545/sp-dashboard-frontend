@@ -2,30 +2,28 @@
 
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
-import { PaginatedResponse, InventorySnapshot } from '@/types';
+import { PaginatedResponse, Product } from '@/types';
 import { useAccountStore } from '@/store/accountStore';
 
-interface InventoryParams {
-  lowStock?: boolean;
+interface ProductsParams {
   search?: string;
   page?: number;
   limit?: number;
 }
 
-export function useInventory(params: InventoryParams = {}) {
+export function useProducts(params: ProductsParams = {}) {
   const selectedAccountId = useAccountStore((s) => s.selectedAccountId);
 
   return useQuery({
-    queryKey: ['inventory', selectedAccountId, params],
+    queryKey: ['products', selectedAccountId, params],
     queryFn: async () => {
-      const queryParams: Record<string, string | number | boolean> = {
+      const queryParams: Record<string, string | number> = {
         page: params.page || 1,
         limit: params.limit || 20,
       };
       if (selectedAccountId) queryParams.accountId = selectedAccountId;
-      if (params.lowStock) queryParams.lowStock = true;
       if (params.search) queryParams.search = params.search;
-      const { data } = await api.get<PaginatedResponse<InventorySnapshot>>('/api/inventory', {
+      const { data } = await api.get<PaginatedResponse<Product>>('/api/products', {
         params: queryParams,
       });
       return data;

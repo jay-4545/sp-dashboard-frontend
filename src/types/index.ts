@@ -9,6 +9,7 @@ export interface User {
 
 export interface AuthResponse {
   token: string;
+  refreshToken: string;
   user: User;
 }
 
@@ -17,10 +18,22 @@ export interface SellerAccount {
   name: string;
   seller_id: string;
   marketplace_id: string;
-  region: 'NA' | 'EU' | 'FE';
+  region: 'NA' | 'EU' | 'FE' | 'IN';
   is_active: boolean;
+  is_connected: boolean;
+  token_expires_at: string | null;
   last_synced_at: string | null;
   created_at?: string;
+}
+
+export interface Product {
+  id: string;
+  account_id: string;
+  asin: string;
+  sku: string | null;
+  title: string | null;
+  listing_status: string | null;
+  account?: { name: string };
 }
 
 export interface DashboardSummary {
@@ -45,24 +58,48 @@ export interface DashboardSummary {
   }>;
 }
 
+export interface OrderItem {
+  sku: string;
+  asin: string;
+  title: string;
+  quantity: number;
+  item_price: number | string | null;
+}
+
+export interface OrderRawData {
+  IsPrime?: boolean;
+  PaymentMethod?: string;
+  SalesChannel?: string;
+  EasyShipShipmentStatus?: string;
+  PaymentMethodDetails?: string[];
+  ShippingAddress?: {
+    City?: string;
+    StateOrRegion?: string;
+    PostalCode?: string;
+    CountryCode?: string;
+  };
+  EarliestShipDate?: string;
+  LatestShipDate?: string;
+  LatestDeliveryDate?: string;
+  EarliestDeliveryDate?: string;
+  ShipServiceLevel?: string;
+  NumberOfItemsUnshipped?: number;
+  [key: string]: unknown;
+}
+
 export interface Order {
   id: string;
   account_id: string;
   amazon_order_id: string;
   status: string | null;
   marketplace_id: string | null;
-  order_total: number | null;
+  order_total: number | string | null;
   currency: string | null;
   fulfillment_channel: 'FBA' | 'FBM' | null;
   purchase_date: string | null;
+  raw_data?: OrderRawData | null;
   account?: { name: string };
-  items?: Array<{
-    sku: string;
-    asin: string;
-    title: string;
-    quantity: number;
-    item_price: number;
-  }>;
+  items?: OrderItem[];
 }
 
 export interface InventorySnapshot {

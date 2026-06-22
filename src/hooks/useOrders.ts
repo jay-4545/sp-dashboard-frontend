@@ -8,6 +8,7 @@ import { useFilterStore } from '@/store/filterStore';
 
 interface OrdersParams {
   status?: string;
+  search?: string;
   page?: number;
   limit?: number;
 }
@@ -27,6 +28,7 @@ export function useOrders(params: OrdersParams = {}) {
       };
       if (selectedAccountId) queryParams.accountId = selectedAccountId;
       if (params.status) queryParams.status = params.status;
+      if (params.search) queryParams.search = params.search;
       const { data } = await api.get<PaginatedResponse<Order>>('/api/orders', { params: queryParams });
       return data;
     },

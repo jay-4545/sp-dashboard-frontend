@@ -9,14 +9,54 @@ import {
   SortingState,
 } from '@tanstack/react-table';
 import { useState } from 'react';
-import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import {
+  Box,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TableSortLabel,
+  TextField,
+  InputAdornment,
+  FormControl,
+  Select,
+  MenuItem,
+  Typography,
+  CircularProgress,
+  Pagination,
+  Stack,
+} from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+import { PaginatedResponse } from '@/types';
+
+export const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 
 interface DataTableProps<T> {
   data: T[];
   columns: ColumnDef<T, unknown>[];
   isLoading?: boolean;
-  emptyMessage?: string;
+  emptyMessage?: React.ReactNode;
+  pagination?: PaginatedResponse<T>['pagination'];
+  onPageChange?: (page: number) => void;
+  limit?: number;
+  onLimitChange?: (limit: number) => void;
+  search?: string;
+  onSearchChange?: (value: string) => void;
+  searchPlaceholder?: string;
+  toolbar?: React.ReactNode;
+}
+
+function getShowingRange(
+  pagination: PaginatedResponse<unknown>['pagination'],
+  currentCount: number
+) {
+  if (pagination.total === 0 || currentCount === 0) return { start: 0, end: 0 };
+  const start = (pagination.page - 1) * pagination.limit + 1;
+  const end = Math.min(start + currentCount - 1, pagination.total);
+  return { start, end };
 }
 
 export function DataTable<T>({
@@ -24,6 +64,14 @@ export function DataTable<T>({
   columns,
   isLoading,
   emptyMessage = 'No data found',
+  pagination,
+  onPageChange,
+  limit,
+  onLimitChange,
+  search,
+  onSearchChange,
+  searchPlaceholder = 'Search...',
+  toolbar,
 }: DataTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -36,80 +84,148 @@ export function DataTable<T>({
     getSortedRowModel: getSortedRowModel(),
   });
 
-  if (isLoading) {
-    return (
-      <div className="flex h-48 items-center justify-center rounded-xl border border-slate-200 bg-white">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600" />
-      </div>
-    );
-  }
-
-  if (!data.length) {
-    return (
-      <div className="flex h-48 items-center justify-center rounded-xl border border-slate-200 bg-white text-sm text-slate-500">
-        {emptyMessage}
-      </div>
-    );
-  }
+  const showToolbar = onSearchChange || onLimitChange || toolbar;
+  const showing = pagination ? getShowingRange(pagination, data.length) : null;
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-      <table className="w-full min-w-[600px] text-left text-sm">
-        <thead className="border-b border-slate-200 bg-slate-50">
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <th
-                  key={header.id}
-                  className="px-4 py-3 font-semibold text-slate-600"
-                  onClick={header.column.getToggleSortingHandler()}
+    <Stack spacing={1.5}>
+      {showToolbar && (
+        <Paper variant="outlined" sx={{ p: 1.5, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5 }}>
+          {onSearchChange && (
+            <TextField
+              size="small"
+              placeholder={searchPlaceholder}
+              value={search ?? ''}
+              onChange={(e) => onSearchChange(e.target.value)}
+              sx={{ width: { xs: 160, sm: 190 } }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ fontSize: 18, color: 'text.disabled' }} />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          )}
+          {toolbar}
+          {onLimitChange && limit !== undefined && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+              <Typography variant="caption" color="text.secondary">
+                Show
+              </Typography>
+              <FormControl size="small" sx={{ minWidth: 100 }}>
+                <Select
+                  value={String(limit)}
+                  onChange={(e) => onLimitChange(Number(e.target.value))}
                 >
-                  <div className="flex cursor-pointer items-center gap-1 select-none">
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                    {header.column.getIsSorted() === 'asc' ? (
-                      <ChevronUp className="h-3.5 w-3.5" />
-                    ) : header.column.getIsSorted() === 'desc' ? (
-                      <ChevronDown className="h-3.5 w-3.5" />
-                    ) : (
-                      <ChevronsUpDown className="h-3.5 w-3.5 text-slate-300" />
-                    )}
-                  </div>
-                </th>
+                  {PAGE_SIZE_OPTIONS.map((n) => (
+                    <MenuItem key={n} value={String(n)}>
+                      {n} / page
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+          )}
+          {showing && pagination && (
+            <Typography variant="caption" color="text.secondary" sx={{ ml: 'auto' }}>
+              {pagination.total === 0 ? (
+                'No results'
+              ) : (
+                <>
+                  Showing {showing.start}–{showing.end} of {pagination.total}
+                  {data.length > 0 && ` · ${data.length} on this page`}
+                </>
+              )}
+            </Typography>
+          )}
+        </Paper>
+      )}
+
+      <TableContainer component={Paper} variant="outlined">
+        {isLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 160 }}>
+            <CircularProgress size={28} />
+          </Box>
+        ) : !data.length ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 160 }}>
+            <Typography variant="body2" color="text.secondary">
+              {emptyMessage}
+            </Typography>
+          </Box>
+        ) : (
+          <Table size="small">
+            <TableHead>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableCell key={header.id}>
+                      {header.column.getCanSort() ? (
+                        <TableSortLabel
+                          active={!!header.column.getIsSorted()}
+                          direction={header.column.getIsSorted() === 'desc' ? 'desc' : 'asc'}
+                          onClick={header.column.getToggleSortingHandler()}
+                        >
+                          {flexRender(header.column.columnDef.header, header.getContext())}
+                        </TableSortLabel>
+                      ) : (
+                        flexRender(header.column.columnDef.header, header.getContext())
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
               ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.map((row) => (
-            <tr key={row.id} className="border-b border-slate-100 hover:bg-slate-50">
-              {row.getVisibleCells().map((cell) => (
-                <td key={cell.id} className="px-4 py-3 text-slate-700">
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
+            </TableHead>
+            <TableBody>
+              {table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id} hover>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
+                </TableRow>
               ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+            </TableBody>
+          </Table>
+        )}
+      </TableContainer>
+
+      {pagination && pagination.totalPages > 0 && onPageChange && (
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+          <Typography variant="caption" color="text.secondary">
+            Page {pagination.page} of {pagination.totalPages}
+          </Typography>
+          <Pagination
+            count={pagination.totalPages}
+            page={pagination.page}
+            onChange={(_, page) => onPageChange(page)}
+            size="small"
+            color="primary"
+            showFirstButton
+            showLastButton
+          />
+        </Box>
+      )}
+    </Stack>
   );
 }
 
+const STATUS_COLORS: Record<string, 'success' | 'warning' | 'error' | 'info' | 'default'> = {
+  Shipped: 'success',
+  Pending: 'warning',
+  Canceled: 'error',
+  Unshipped: 'info',
+};
+
 export function StatusBadge({ status }: { status: string | null }) {
-  const colors: Record<string, string> = {
-    Shipped: 'bg-green-100 text-green-700',
-    Pending: 'bg-yellow-100 text-yellow-700',
-    Canceled: 'bg-red-100 text-red-700',
-    Unshipped: 'bg-blue-100 text-blue-700',
-  };
   return (
-    <span
-      className={cn(
-        'inline-block rounded-full px-2 py-0.5 text-xs font-medium',
-        colors[status || ''] || 'bg-slate-100 text-slate-600'
-      )}
-    >
-      {status || 'Unknown'}
-    </span>
+    <Chip
+      label={status || 'Unknown'}
+      size="small"
+      color={STATUS_COLORS[status || ''] || 'default'}
+      variant="outlined"
+      sx={{ height: 20, fontSize: '0.6875rem' }}
+    />
   );
 }

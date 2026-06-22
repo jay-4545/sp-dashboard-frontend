@@ -1,8 +1,19 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { ColumnDef } from '@tanstack/react-table';
+import {
+  Box,
+  Grid,
+  Card,
+  CardContent,
+  Typography,
+  Skeleton,
+  Chip,
+} from '@mui/material';
 import { useFinanceEvents, useFinancePnl } from '@/hooks/useFinance';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { DataTable } from '@/components/shared/DataTable';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { FinancialEvent } from '@/types';
@@ -22,9 +33,7 @@ const columns: ColumnDef<FinancialEvent, unknown>[] = [
     accessorKey: 'event_type',
     header: 'Event Type',
     cell: ({ getValue }) => (
-      <span className="rounded bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700">
-        {(getValue() as string) || '—'}
-      </span>
+      <Chip label={(getValue() as string) || '—'} size="small" color="secondary" variant="outlined" />
     ),
   },
   {
@@ -36,102 +45,98 @@ const columns: ColumnDef<FinancialEvent, unknown>[] = [
     accessorKey: 'amazon_order_id',
     header: 'Order ID',
     cell: ({ getValue }) => (
-      <span className="font-mono text-xs">{getValue() as string || '—'}</span>
+      <Typography variant="caption"  sx={{ fontFamily: 'monospace' }}>
+        {(getValue() as string) || '—'}
+      </Typography>
     ),
   },
   {
     accessorKey: 'amount',
     header: 'Amount',
-    cell: ({ row }) => formatCurrency(row.original.amount, row.original.currency || 'USD'),
+    cell: ({ row }) => formatCurrency(row.original.amount, row.original.currency || 'INR'),
   },
 ];
 
 export default function FinancePage() {
   const [page, setPage] = useState(1);
-  const { data: events, isLoading } = useFinanceEvents(page);
+  const [limit, setLimit] = useState(20);
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search);
+  const { data: events, isLoading } = useFinanceEvents({ page, limit, search: debouncedSearch || undefined });
   const { data: pnl, isLoading: pnlLoading } = useFinancePnl();
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-sm text-slate-500">Total Revenue</p>
-          {pnlLoading ? (
-            <div className="mt-2 h-8 w-24 animate-pulse rounded bg-slate-100" />
-          ) : (
-            <p className="mt-1 text-2xl font-bold text-green-600">
-              {formatCurrency(pnl?.totalRevenue || 0)}
-            </p>
-          )}
-        </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-sm text-slate-500">Event Types</p>
-          {pnlLoading ? (
-            <div className="mt-2 h-8 w-16 animate-pulse rounded bg-slate-100" />
-          ) : (
-            <p className="mt-1 text-2xl font-bold text-slate-800">
-              {pnl?.events?.length || 0}
-            </p>
-          )}
-        </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-sm text-slate-500">Total Events</p>
-          {isLoading ? (
-            <div className="mt-2 h-8 w-16 animate-pulse rounded bg-slate-100" />
-          ) : (
-            <p className="mt-1 text-2xl font-bold text-slate-800">
-              {events?.pagination?.total || 0}
-            </p>
-          )}
-        </div>
-      </div>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <Grid container spacing={2}>
+        {[
+          { label: 'Total Revenue', value: formatCurrency(pnl?.totalRevenue || 0), color: 'success.main', loading: pnlLoading },
+          { label: 'Event Types', value: pnl?.events?.length || 0, color: 'text.primary', loading: pnlLoading },
+          { label: 'Total Events', value: events?.pagination?.total || 0, color: 'text.primary', loading: isLoading },
+        ].map(({ label, value, color, loading }) => (
+          <Grid size={{ xs: 12, sm: 4 }} key={label}>
+            <Card variant="outlined">
+              <CardContent>
+                <Typography variant="body2" color="text.secondary">
+                  {label}
+                </Typography>
+                {loading ? (
+                  <Skeleton width={80} height={36} sx={{ mt: 1 }} />
+                ) : (
+                  <Typography variant="h5"  color={color} sx={{ mt: 0.5, fontWeight: 700 }}>
+                    {value}
+                  </Typography>
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
 
       {pnl?.events && pnl.events.length > 0 && (
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="mb-3 text-sm font-semibold text-slate-700">P&L Breakdown</h3>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {pnl.events.map((e, i) => (
-              <div key={i} className="flex justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm">
-                <span className="text-slate-600">{e.fee_type || e.event_type}</span>
-                <span className="font-medium text-slate-800">
-                  {formatCurrency(e.total, e.currency)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <Card variant="outlined">
+          <CardContent>
+            <Typography variant="subtitle2"  gutterBottom sx={{ fontWeight: 600 }}>
+              P&L Breakdown
+            </Typography>
+            <Grid container spacing={1}>
+              {pnl.events.map((e, i) => (
+                <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={i}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', bgcolor: 'grey.50', borderRadius: 1, px: 1.5, py: 1 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      {e.fee_type || e.event_type}
+                    </Typography>
+                    <Typography variant="body2"  sx={{ fontWeight: 600 }}>
+                      {formatCurrency(e.total, e.currency)}
+                    </Typography>
+                  </Box>
+                </Grid>
+              ))}
+            </Grid>
+          </CardContent>
+        </Card>
       )}
 
       <DataTable
         data={events?.data || []}
         columns={columns}
         isLoading={isLoading}
-        emptyMessage="No financial events. Data syncs every 6 hours once Amazon credentials are configured."
+        pagination={events?.pagination}
+        onPageChange={setPage}
+        limit={limit}
+        onLimitChange={(v) => { setLimit(v); setPage(1); }}
+        search={search}
+        onSearchChange={(v) => { setSearch(v); setPage(1); }}
+        searchPlaceholder="Search order ID, event type, fee type..."
+        emptyMessage={
+          <>
+            No financial events.{' '}
+            <Typography component={Link} href="/accounts" variant="body2" color="primary" sx={{ display: 'inline' }}>
+              Connect an account
+            </Typography>{' '}
+            and sync finance data.
+          </>
+        }
       />
-
-      {events && events.pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between text-sm text-slate-500">
-          <span>
-            Page {events.pagination.page} of {events.pagination.totalPages}
-          </span>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="rounded-lg border border-slate-200 px-3 py-1.5 hover:bg-white disabled:opacity-40"
-            >
-              Previous
-            </button>
-            <button
-              onClick={() => setPage((p) => p + 1)}
-              disabled={page >= events.pagination.totalPages}
-              className="rounded-lg border border-slate-200 px-3 py-1.5 hover:bg-white disabled:opacity-40"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+    </Box>
   );
 }

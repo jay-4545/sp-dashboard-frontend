@@ -47,9 +47,10 @@ App runs at `http://localhost:3000`
 |-------|-------------|
 | `/login` | Sign in |
 | `/dashboard` | KPIs, revenue chart, account breakdown, top SKUs |
-| `/accounts` | Seller account cards, sync status, manual sync |
-| `/orders` | Filterable orders table |
+| `/accounts` | Add/connect seller accounts, sync status, manual sync |
+| `/orders` | Filterable orders table with line item details |
 | `/inventory` | Stock levels with low-stock alerts |
+| `/products` | Listing catalog synced from Amazon |
 | `/finance` | Financial events and P&L summary |
 
 ## Deploy on Vercel
@@ -57,9 +58,11 @@ App runs at `http://localhost:3000`
 - Connect this repo to Vercel
 - Set `NEXT_PUBLIC_API_URL` to your Render backend URL
 - Update backend `FRONTEND_URL` to match your Vercel domain (CORS)
+- Ensure backend OAuth redirect URI is registered in Seller Central
 
 ## Security
 
 - JWT stored in `sessionStorage` (cleared on tab close)
+- Auth cookie set for middleware route protection
 - No Amazon secrets in frontend env
-- Protected routes redirect to `/login` when unauthenticated
+- Admin-only actions hidden for viewer role

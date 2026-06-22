@@ -1,5 +1,7 @@
 'use client';
 
+import { Stack } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import { useDashboard } from '@/hooks/useDashboard';
 import { SummaryCards } from '@/components/dashboard/SummaryCards';
 import { RevenueChart } from '@/components/dashboard/RevenueChart';
@@ -10,13 +12,17 @@ export default function DashboardPage() {
   const { data, isLoading } = useDashboard();
 
   return (
-    <div className="space-y-6">
+    <Stack spacing={3}>
       <SummaryCards data={data} isLoading={isLoading} />
       <RevenueChart data={data} isLoading={isLoading} />
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <AccountBreakdown data={data} isLoading={isLoading} />
-        <TopSKUs data={data} isLoading={isLoading} />
-      </div>
-    </div>
+      <Grid container spacing={2}>
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <AccountBreakdown data={data} isLoading={isLoading} />
+        </Grid>
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <TopSKUs data={data} isLoading={isLoading} />
+        </Grid>
+      </Grid>
+    </Stack>
   );
 }

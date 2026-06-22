@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { Box, CircularProgress } from '@mui/material';
 import { isAuthenticated } from '@/lib/auth';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TopBar } from '@/components/layout/TopBar';
+import { DRAWER_WIDTH } from '@/components/layout/constants';
 
 const pageTitles: Record<string, string> = {
   '/dashboard': 'Dashboard',
@@ -12,6 +14,7 @@ const pageTitles: Record<string, string> = {
   '/orders': 'Orders',
   '/inventory': 'Inventory',
   '/finance': 'Finance',
+  '/products': 'Products',
 };
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -30,9 +33,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (!ready) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-100">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600" />
-      </div>
+      <Box sx={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center' }}>
+        <CircularProgress size={32} />
+      </Box>
     );
   }
 
@@ -40,16 +43,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const showFilters = pathname !== '/accounts';
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="lg:pl-60">
+      <Box sx={{ flex: 1, width: { lg: `calc(100% - ${DRAWER_WIDTH}px)` } }}>
         <TopBar
           onMenuClick={() => setSidebarOpen(true)}
           title={title}
           showFilters={showFilters}
         />
-        <main className="p-4 lg:p-6">{children}</main>
-      </div>
-    </div>
+        <Box component="main" sx={{ p: { xs: 2, lg: 3 } }}>
+          {children}
+        </Box>
+      </Box>
+    </Box>
   );
 }

@@ -1,11 +1,23 @@
 'use client';
 
-import { Menu, LogOut } from 'lucide-react';
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  IconButton,
+  Button,
+  Box,
+} from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
+import LogoutIcon from '@mui/icons-material/Logout';
 import { useRouter } from 'next/navigation';
-import { clearToken } from '@/lib/auth';
+import { clearToken, getRefreshToken } from '@/lib/auth';
+import api from '@/lib/api';
+import { useUserStore } from '@/store/userStore';
 import { AccountSelector } from '@/components/shared/AccountSelector';
 import { SyncStatus } from '@/components/shared/SyncStatus';
 import { DateRangePicker } from '@/components/shared/DateRangePicker';
+import { DRAWER_WIDTH } from './constants';
 
 interface TopBarProps {
   onMenuClick: () => void;
@@ -16,36 +28,62 @@ interface TopBarProps {
 export function TopBar({ onMenuClick, title, showFilters = true }: TopBarProps) {
   const router = useRouter();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const refreshToken = getRefreshToken();
+    try {
+      if (refreshToken) await api.post('/api/auth/logout', { refreshToken });
+    } catch {
+      // proceed with local logout
+    }
     clearToken();
+    useUserStore.getState().setUser(null);
     router.push('/login');
   };
 
   return (
-    <header className="sticky top-0 z-30 flex flex-wrap items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 lg:px-6">
-      <button
-        onClick={onMenuClick}
-        className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden"
-      >
-        <Menu className="h-5 w-5" />
-      </button>
-      <h2 className="flex-1 text-lg font-semibold text-slate-800">{title}</h2>
-      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-        {showFilters && (
-          <>
-            <AccountSelector />
-            <DateRangePicker />
-          </>
-        )}
-        <SyncStatus />
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
-        >
-          <LogOut className="h-4 w-4" />
-          <span className="hidden sm:inline">Logout</span>
-        </button>
-      </div>
-    </header>
+    <AppBar
+      position="sticky"
+      elevation={0}
+      sx={{
+        bgcolor: 'background.paper',
+        color: 'text.primary',
+        borderBottom: 1,
+        borderColor: 'divider',
+        width: { lg: `calc(100% - ${DRAWER_WIDTH}px)` },
+        ml: { lg: `${DRAWER_WIDTH}px` },
+      }}
+    >
+      <Toolbar variant="dense" sx={{ gap: 1, minHeight: 48, flexWrap: 'wrap', py: 0.5 }}>
+        <IconButton edge="start" onClick={onMenuClick} sx={{ display: { lg: 'none' } }} size="small">
+          <MenuIcon fontSize="small" />
+        </IconButton>
+
+        <Typography variant="subtitle1"  sx={{ flex: 1, fontSize: '0.875rem', fontWeight: 600 }}>
+          {title}
+        </Typography>
+
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
+          {showFilters && (
+            <>
+              <AccountSelector />
+              <DateRangePicker />
+            </>
+          )}
+          <SyncStatus />
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<LogoutIcon sx={{ fontSize: 16 }} />}
+            onClick={handleLogout}
+            sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+          >
+            Logout
+          </Button>
+          <IconButton onClick={handleLogout} size="small" sx={{ display: { sm: 'none' } }}>
+            <LogoutIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      </Toolbar>
+    </AppBar>
   );
 }

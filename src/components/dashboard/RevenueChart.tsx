@@ -1,5 +1,6 @@
 'use client';
 
+import { Paper, Typography, Box, CircularProgress } from '@mui/material';
 import {
   LineChart,
   Line,
@@ -25,44 +26,40 @@ export function RevenueChart({ data, isLoading }: RevenueChartProps) {
     })) || [];
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h3 className="mb-4 text-sm font-semibold text-slate-700">Revenue Trend</h3>
+    <Paper variant="outlined" sx={{ p: 2 }}>
+      <Typography variant="subtitle2"  gutterBottom sx={{ fontWeight: 600 }}>
+        Revenue Trend
+      </Typography>
       {isLoading ? (
-        <div className="flex h-64 items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600" />
-        </div>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 260 }}>
+          <CircularProgress size={28} />
+        </Box>
       ) : chartData.length === 0 ? (
-        <div className="flex h-64 items-center justify-center text-sm text-slate-400">
-          No revenue data for selected period
-        </div>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 260 }}>
+          <Typography variant="body2" color="text.secondary">
+            No revenue data for selected period
+          </Typography>
+        </Box>
       ) : (
         <ResponsiveContainer width="100%" height={260}>
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-            <XAxis
-              dataKey="date"
+            <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#64748b' }} tickFormatter={(v) => v?.slice(5) || v} />
+            <YAxis
               tick={{ fontSize: 11, fill: '#64748b' }}
-              tickFormatter={(v) => v?.slice(5) || v}
+              tickFormatter={(v) => `₹${Number(v).toLocaleString('en-IN')}`}
             />
-            <YAxis tick={{ fontSize: 11, fill: '#64748b' }} />
             <Tooltip
-              contentStyle={{
-                borderRadius: '8px',
-                border: '1px solid #e2e8f0',
-                fontSize: '12px',
+              contentStyle={{ borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 12 }}
+              formatter={(value: number, name: string) => {
+                if (name === 'Revenue') return [`₹${value.toLocaleString('en-IN')}`, name];
+                return [value, name];
               }}
             />
-            <Line
-              type="monotone"
-              dataKey="revenue"
-              stroke="#3b82f6"
-              strokeWidth={2}
-              dot={{ r: 3 }}
-              name="Revenue"
-            />
+            <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} name="Revenue" />
           </LineChart>
         </ResponsiveContainer>
       )}
-    </div>
+    </Paper>
   );
 }
