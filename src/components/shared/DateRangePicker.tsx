@@ -57,10 +57,10 @@ export function DateRangePicker() {
             }}
             sx={{
               minWidth: 'auto',
-              px: 1,
-              py: 0.25,
-              fontSize: '0.6875rem',
-              lineHeight: 1.5,
+              px: 0.75,
+              py: 0.125,
+              fontSize: '0.625rem',
+              lineHeight: 1.4,
               ...(active ? {} : { color: 'text.secondary', borderColor: 'divider' }),
             }}
           >
@@ -74,10 +74,10 @@ export function DateRangePicker() {
         size="small"
         value={startDate}
         onChange={(e) => handleStartChange(e.target.value)}
-        inputProps={{ max: endDate }}
-        sx={{ width: 130, '& input': { fontSize: '0.75rem', py: 0.75 } }}
+        slotProps={{ htmlInput: { max: endDate } }}
+        sx={{ width: 118, '& input': { fontSize: '0.6875rem', py: 0.5 } }}
       />
-      <Box component="span" sx={{ color: 'text.disabled', fontSize: '0.75rem' }}>
+      <Box component="span" sx={{ color: 'text.disabled', fontSize: '0.6875rem' }}>
         –
       </Box>
       <TextField
@@ -85,11 +85,11 @@ export function DateRangePicker() {
         size="small"
         value={endDate}
         onChange={(e) => handleEndChange(e.target.value)}
-        inputProps={{ min: startDate }}
-        sx={{ width: 130, '& input': { fontSize: '0.75rem', py: 0.75 } }}
+        slotProps={{ htmlInput: { min: startDate } }}
+        sx={{ width: 118, '& input': { fontSize: '0.6875rem', py: 0.5 } }}
       />
-      <IconButton size="small" onClick={resetDateRange} title="Reset to last 30 days">
-        <RestartAltIcon sx={{ fontSize: 16 }} />
+      <IconButton size="small" onClick={resetDateRange} title="Reset to last 30 days" sx={{ p: 0.25 }}>
+        <RestartAltIcon sx={{ fontSize: 14 }} />
       </IconButton>
     </Box>
   );

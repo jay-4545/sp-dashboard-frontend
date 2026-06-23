@@ -14,7 +14,7 @@ export function SyncStatus() {
     return (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
         <CircularProgress size={14} />
-        <Typography variant="caption" color="text.secondary">
+        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.6875rem' }}>
           Sync...
         </Typography>
       </Box>
@@ -23,7 +23,15 @@ export function SyncStatus() {
 
   const latestJob = data?.recentJobs?.[0];
   if (!latestJob) {
-    return <Chip icon={<SyncIcon />} label="No syncs yet" size="small" variant="outlined" />;
+    return (
+      <Chip
+        icon={<SyncIcon sx={{ fontSize: 12 }} />}
+        label="No syncs yet"
+        size="small"
+        variant="outlined"
+        sx={{ '& .MuiChip-label': { fontSize: '0.6875rem' } }}
+      />
+    );
   }
 
   const config = {
@@ -42,7 +50,12 @@ export function SyncStatus() {
       color={color}
       variant="outlined"
       title={latestJob.error_message || undefined}
-      sx={{ display: { xs: 'none', sm: 'flex' }, maxWidth: 220, '& .MuiChip-label': { overflow: 'hidden', textOverflow: 'ellipsis' } }}
+      sx={{
+        display: { xs: 'none', sm: 'flex' },
+        maxWidth: 200,
+        height: 24,
+        '& .MuiChip-label': { fontSize: '0.6875rem', overflow: 'hidden', textOverflow: 'ellipsis' },
+      }}
     />
   );
 }

@@ -130,6 +130,11 @@ export interface FinancialEvent {
 
 export interface FinancePnl {
   totalRevenue: number;
+  totalFees: number;
+  netProfit: number;
+  eventCount: number;
+  hasFinanceData: boolean;
+  currency: string;
   events: Array<{
     event_type: string;
     fee_type: string;

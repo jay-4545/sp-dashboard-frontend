@@ -112,21 +112,22 @@ export default function OrdersPage() {
         onSearchChange={(v) => { setSearch(v); setPage(1); }}
         searchPlaceholder="Search order ID, SKU, ASIN..."
         toolbar={
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="caption" color="text.secondary">
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.6875rem' }}>
               Status
             </Typography>
-            <FormControl size="small" sx={{ minWidth: 120 }}>
+            <FormControl size="small" sx={{ minWidth: 100 }}>
               <Select
                 value={status}
                 displayEmpty
                 onChange={(e) => { setStatus(e.target.value); setPage(1); }}
+                sx={{ fontSize: '0.6875rem', '& .MuiSelect-select': { py: 0.5 } }}
               >
-                <MenuItem value="">
+                <MenuItem value="" sx={{ fontSize: '0.6875rem' }}>
                   <em>All statuses</em>
                 </MenuItem>
                 {ORDER_STATUSES.map((s) => (
-                  <MenuItem key={s} value={s}>
+                  <MenuItem key={s} value={s} sx={{ fontSize: '0.6875rem' }}>
                     {s}
                   </MenuItem>
                 ))}

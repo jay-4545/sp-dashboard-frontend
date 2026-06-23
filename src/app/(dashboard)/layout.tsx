@@ -45,7 +45,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <Box sx={{ flex: 1, width: { lg: `calc(100% - ${DRAWER_WIDTH}px)` } }}>
+      <Box
+        sx={{
+          flex: 1,
+          minWidth: 0,
+          width: { lg: `calc(100% - ${DRAWER_WIDTH}px)` },
+          ml: { lg: `${DRAWER_WIDTH}px` },
+        }}
+      >
         <TopBar
           onMenuClick={() => setSidebarOpen(true)}
           title={title}

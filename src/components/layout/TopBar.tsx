@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -17,8 +18,7 @@ import { useUserStore } from '@/store/userStore';
 import { AccountSelector } from '@/components/shared/AccountSelector';
 import { SyncStatus } from '@/components/shared/SyncStatus';
 import { DateRangePicker } from '@/components/shared/DateRangePicker';
-import { DRAWER_WIDTH } from './constants';
-
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 interface TopBarProps {
   onMenuClick: () => void;
   title: string;
@@ -27,8 +27,11 @@ interface TopBarProps {
 
 export function TopBar({ onMenuClick, title, showFilters = true }: TopBarProps) {
   const router = useRouter();
+  const [logoutOpen, setLogoutOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const handleLogout = async () => {
+    setLoggingOut(true);
     const refreshToken = getRefreshToken();
     try {
       if (refreshToken) await api.post('/api/auth/logout', { refreshToken });
@@ -41,6 +44,7 @@ export function TopBar({ onMenuClick, title, showFilters = true }: TopBarProps) 
   };
 
   return (
+    <>
     <AppBar
       position="sticky"
       elevation={0}
@@ -49,8 +53,7 @@ export function TopBar({ onMenuClick, title, showFilters = true }: TopBarProps) 
         color: 'text.primary',
         borderBottom: 1,
         borderColor: 'divider',
-        width: { lg: `calc(100% - ${DRAWER_WIDTH}px)` },
-        ml: { lg: `${DRAWER_WIDTH}px` },
+        width: '100%',
       }}
     >
       <Toolbar variant="dense" sx={{ gap: 1, minHeight: 48, flexWrap: 'wrap', py: 0.5 }}>
@@ -74,16 +77,28 @@ export function TopBar({ onMenuClick, title, showFilters = true }: TopBarProps) 
             variant="outlined"
             size="small"
             startIcon={<LogoutIcon sx={{ fontSize: 16 }} />}
-            onClick={handleLogout}
+            onClick={() => setLogoutOpen(true)}
             sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
           >
             Logout
           </Button>
-          <IconButton onClick={handleLogout} size="small" sx={{ display: { sm: 'none' } }}>
+          <IconButton onClick={() => setLogoutOpen(true)} size="small" sx={{ display: { sm: 'none' } }}>
             <LogoutIcon fontSize="small" />
           </IconButton>
         </Box>
       </Toolbar>
     </AppBar>
+
+      <ConfirmDialog
+        open={logoutOpen}
+        title="Logout"
+        message="Are you sure you want to logout from your session?"
+        confirmLabel="Logout"
+        confirmColor="error"
+        loading={loggingOut}
+        onCancel={() => setLogoutOpen(false)}
+        onConfirm={handleLogout}
+      />
+    </>
   );
 }

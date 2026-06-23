@@ -43,12 +43,12 @@ function DrawerContent({ onClose }: { onClose?: () => void }) {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: '#1e293b', color: '#fff' }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, py: 1.5, borderBottom: 1, borderColor: 'rgba(255,255,255,0.1)' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 1.5, py: 1.25, borderBottom: 1, borderColor: 'rgba(255,255,255,0.1)' }}>
         <Box>
-          <Typography variant="caption" sx={{ color: 'grey.400', letterSpacing: 2, fontSize: '0.625rem' }}>
+          <Typography variant="caption" sx={{ color: 'grey.400', letterSpacing: 1.5, fontSize: '0.5625rem' }}>
             AMAZON SP-API
           </Typography>
-          <Typography variant="subtitle2"  sx={{ fontWeight: 700 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, fontSize: '0.75rem', lineHeight: 1.3 }}>
             Seller Dashboard
           </Typography>
         </Box>
@@ -59,7 +59,7 @@ function DrawerContent({ onClose }: { onClose?: () => void }) {
         )}
       </Box>
 
-      <List sx={{ flex: 1, py: 1, px: 1 }}>
+      <List sx={{ flex: 1, py: 0.75, px: 0.75 }}>
         {navItems.map(({ href, label, icon: Icon }) => (
           <ListItemButton
             key={href}
@@ -70,23 +70,24 @@ function DrawerContent({ onClose }: { onClose?: () => void }) {
             sx={{
               borderRadius: 1,
               mb: 0.25,
-              py: 0.75,
+              py: 0.5,
+              minHeight: 32,
               color: pathname === href ? '#fff' : 'grey.300',
               bgcolor: pathname === href ? 'rgba(255,255,255,0.12)' : 'transparent',
               '&:hover': { bgcolor: 'rgba(255,255,255,0.08)', color: '#fff' },
               '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.12)', color: '#fff' },
             }}
           >
-            <ListItemIcon sx={{ minWidth: 32, color: 'inherit' }}>
-              <Icon sx={{ fontSize: 18 }} />
+            <ListItemIcon sx={{ minWidth: 28, color: 'inherit' }}>
+              <Icon sx={{ fontSize: 16 }} />
             </ListItemIcon>
-            <ListItemText primary={label} primaryTypographyProps={{ fontSize: '0.8125rem', fontWeight: 500 }} />
+            <ListItemText primary={label} primaryTypographyProps={{ fontSize: '0.75rem', fontWeight: 500 }} />
           </ListItemButton>
         ))}
       </List>
 
       <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
-      <Typography variant="caption" sx={{ p: 1.5, color: 'grey.500', fontSize: '0.6875rem' }}>
+      <Typography variant="caption" sx={{ p: 1.25, color: 'grey.500', fontSize: '0.625rem' }}>
         Private App · {accounts?.length || 0}/5 Accounts
       </Typography>
     </Box>

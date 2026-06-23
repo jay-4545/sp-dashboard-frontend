@@ -28,6 +28,7 @@ import {
   CircularProgress,
   Pagination,
   Stack,
+  Chip,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { PaginatedResponse } from '@/types';
@@ -97,29 +98,32 @@ export function DataTable<T>({
               placeholder={searchPlaceholder}
               value={search ?? ''}
               onChange={(e) => onSearchChange(e.target.value)}
-              sx={{ width: { xs: 160, sm: 190 } }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon sx={{ fontSize: 18, color: 'text.disabled' }} />
-                  </InputAdornment>
-                ),
+              sx={{ width: { xs: 150, sm: 180 }, '& input': { fontSize: '0.75rem', py: 0.75 } }}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
+                    </InputAdornment>
+                  ),
+                },
               }}
             />
           )}
           {toolbar}
           {onLimitChange && limit !== undefined && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.6875rem' }}>
                 Show
               </Typography>
-              <FormControl size="small" sx={{ minWidth: 100 }}>
+              <FormControl size="small" sx={{ minWidth: 90 }}>
                 <Select
                   value={String(limit)}
                   onChange={(e) => onLimitChange(Number(e.target.value))}
+                  sx={{ fontSize: '0.6875rem', '& .MuiSelect-select': { py: 0.5 } }}
                 >
                   {PAGE_SIZE_OPTIONS.map((n) => (
-                    <MenuItem key={n} value={String(n)}>
+                    <MenuItem key={n} value={String(n)} sx={{ fontSize: '0.6875rem' }}>
                       {n} / page
                     </MenuItem>
                   ))}
