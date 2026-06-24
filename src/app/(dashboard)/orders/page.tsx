@@ -2,15 +2,20 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ColumnDef } from '@tanstack/react-table';
+import Grid from '@mui/material/Grid';
 import { Box, IconButton, Chip, Typography, FormControl, Select, MenuItem } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import { ColumnDef } from '@tanstack/react-table';
 import { useOrders } from '@/hooks/useOrders';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { MetricCard } from '@/components/shared/MetricCard';
 import { DataTable, StatusBadge } from '@/components/shared/DataTable';
 import { OrderDetailModal } from '@/components/orders/OrderDetailModal';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate, formatNumber } from '@/lib/utils';
 import { getOrderItemCount, getPaymentLabel, getShippingLabel } from '@/lib/orderUtils';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import ReplayIcon from '@mui/icons-material/Replay';
 import { Order } from '@/types';
 
 const ORDER_STATUSES = ['Pending', 'Unshipped', 'Shipped', 'Canceled'];
@@ -30,7 +35,7 @@ const orderColumns = (onView: (order: Order) => void): ColumnDef<Order, unknown>
     accessorKey: 'amazon_order_id',
     header: 'Order ID',
     cell: ({ getValue }) => (
-      <Typography variant="caption"  sx={{ fontFamily: 'monospace' }}>
+      <Typography variant="caption">
         {getValue() as string}
       </Typography>
     ),
@@ -44,7 +49,14 @@ const orderColumns = (onView: (order: Order) => void): ColumnDef<Order, unknown>
   {
     accessorKey: 'status',
     header: 'Status',
-    cell: ({ getValue }) => <StatusBadge status={getValue() as string | null} />,
+    cell: ({ getValue, row }) => (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <StatusBadge status={getValue() as string | null} />
+        {row.original.is_refunded && (
+          <Chip label="Refunded" size="small" color="warning" sx={{ height: 20 }} />
+        )}
+      </Box>
+    ),
   },
   {
     id: 'items',
@@ -56,6 +68,20 @@ const orderColumns = (onView: (order: Order) => void): ColumnDef<Order, unknown>
     accessorKey: 'order_total',
     header: 'Total',
     cell: ({ row }) => formatCurrency(row.original.order_total, row.original.currency || 'INR'),
+  },
+  {
+    id: 'grossProfit',
+    header: 'Profit',
+    cell: ({ row }) => {
+      const profit = row.original.computed?.grossProfit;
+      if (profit == null) return '—';
+      const color = profit >= 0 ? 'success.main' : 'error.main';
+      return (
+        <Typography variant="caption" sx={{ fontWeight: 600, color }}>
+          {formatCurrency(profit, row.original.currency || 'INR')}
+        </Typography>
+      );
+    },
   },
   {
     id: 'payment',
@@ -73,7 +99,7 @@ const orderColumns = (onView: (order: Order) => void): ColumnDef<Order, unknown>
     accessorKey: 'fulfillment_channel',
     header: 'Channel',
     cell: ({ getValue }) => (
-      <Chip label={(getValue() as string) || '—'} size="small" variant="outlined" sx={{ fontFamily: 'monospace', height: 20, fontSize: '0.6875rem' }} />
+      <Chip label={(getValue() as string) || '—'} size="small" variant="outlined" sx={{ height: 20 }} />
     ),
   },
   {
@@ -98,10 +124,43 @@ export default function OrdersPage() {
     search: debouncedSearch || undefined,
   });
 
+  const orders = data?.data ?? [];
+  const refundedCount = orders.filter((o) => o.is_refunded).length;
+
   return (
-    <Box>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+      <PageHeader
+        title="Orders"
+        description="Browse and inspect Amazon orders with profit and refund status"
+      />
+
+      <Grid container spacing={1.5}>
+        <Grid size={{ xs: 6, sm: 4 }}>
+          <MetricCard
+            label="Total Orders"
+            value={formatNumber(data?.pagination?.total ?? 0)}
+            icon={ShoppingCartIcon}
+            iconColor="#6366f1"
+            iconBg="#eef2ff"
+            loading={isLoading}
+          />
+        </Grid>
+        <Grid size={{ xs: 6, sm: 4 }}>
+          <MetricCard
+            label="Refunded (this page)"
+            value={String(refundedCount)}
+            icon={ReplayIcon}
+            iconColor="#d97706"
+            iconBg="#fef3c7"
+            loading={isLoading}
+          />
+        </Grid>
+      </Grid>
+
       <DataTable
-        data={data?.data ?? []}
+        title="Order List"
+        subtitle="Click the eye icon to view full order details"
+        data={orders}
         columns={orderColumns(setSelectedOrder)}
         isLoading={isLoading}
         pagination={data?.pagination}
@@ -113,7 +172,7 @@ export default function OrdersPage() {
         searchPlaceholder="Search order ID, SKU, ASIN..."
         toolbar={
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.6875rem' }}>
+            <Typography variant="caption" color="text.secondary">
               Status
             </Typography>
             <FormControl size="small" sx={{ minWidth: 100 }}>
@@ -121,13 +180,12 @@ export default function OrdersPage() {
                 value={status}
                 displayEmpty
                 onChange={(e) => { setStatus(e.target.value); setPage(1); }}
-                sx={{ fontSize: '0.6875rem', '& .MuiSelect-select': { py: 0.5 } }}
               >
-                <MenuItem value="" sx={{ fontSize: '0.6875rem' }}>
+                <MenuItem value="">
                   <em>All statuses</em>
                 </MenuItem>
                 {ORDER_STATUSES.map((s) => (
-                  <MenuItem key={s} value={s} sx={{ fontSize: '0.6875rem' }}>
+                  <MenuItem key={s} value={s}>
                     {s}
                   </MenuItem>
                 ))}

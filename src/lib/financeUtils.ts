@@ -17,7 +17,7 @@ export function getFinancialEventDisplay(
   return {
     amount: event.amount,
     currency: event.currency || 'INR',
-    feeType: event.fee_type || formatEventType(event.event_type),
-    eventType: formatEventType(event.event_type),
+    feeType: event.fee_type || formatEventType(event.event_type ?? null),
+    eventType: formatEventType(event.event_type ?? null),
   };
 }

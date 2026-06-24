@@ -1,12 +1,15 @@
 'use client';
 
 import Grid from '@mui/material/Grid';
-import { Card, CardContent, Typography, Box, Skeleton, Avatar } from '@mui/material';
+import { Box } from '@mui/material';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import CurrencyRupeeIcon from '@mui/icons-material/CurrencyRupee';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import ReplayIcon from '@mui/icons-material/Replay';
+import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import { formatCurrency, formatNumber } from '@/lib/utils';
+import { MetricCard } from '@/components/shared/MetricCard';
 import { DashboardSummary, FinancePnl } from '@/types';
 
 interface SummaryCardsProps {
@@ -16,62 +19,66 @@ interface SummaryCardsProps {
   pnlLoading?: boolean;
 }
 
-const cards = [
-  { label: 'Total Revenue', key: 'revenue', icon: CurrencyRupeeIcon, color: 'success.main', bg: 'success.50' },
-  { label: 'Net Profit', key: 'netProfit', icon: AccountBalanceWalletIcon, color: 'primary.main', bg: '#e2e8f0', pnlKey: true },
-  { label: 'Total Orders', key: 'orders', icon: ShoppingCartIcon, color: 'info.main', bg: 'info.50' },
-  { label: 'Avg Order Value', key: 'aov', icon: TrendingUpIcon, color: 'secondary.main', bg: 'secondary.50' },
-] as const;
-
 export function SummaryCards({ data, isLoading, pnl, pnlLoading }: SummaryCardsProps) {
-  const currency = pnl?.currency || 'INR';
-  const values: Record<string, string> = {
-    revenue: data ? formatCurrency(data.totalRevenue) : '—',
-    netProfit: pnl ? formatCurrency(pnl.netProfit, currency) : '—',
-    orders: data ? formatNumber(data.totalOrders) : '—',
-    aov: data && data.totalOrders > 0 ? formatCurrency(data.totalRevenue / data.totalOrders) : '—',
-  };
+  const currency = data?.currency || pnl?.currency || 'INR';
+  const netProfit = pnl?.netProfit ?? 0;
+  const revenue = data?.totalRevenue ?? 0;
+
+  const secondary = [
+    { key: 'orders', label: 'Total Orders', value: data ? formatNumber(data.totalOrders) : '—', icon: ShoppingCartIcon, color: '#6366f1', bg: '#eef2ff' },
+    { key: 'gross', label: 'Gross Profit', value: pnl ? formatCurrency(pnl.grossProfit, currency) : '—', icon: TrendingUpIcon, color: '#0ea5e9', bg: '#e0f2fe', subtitle: pnl ? `${pnl.grossMargin.toFixed(1)}% margin` : undefined },
+    { key: 'refunds', label: 'Refunds', value: data ? formatCurrency(data.totalRefunds, currency) : '—', icon: ReplayIcon, color: '#d97706', bg: '#fef3c7' },
+    { key: 'cogsLost', label: 'COGS Lost', value: data ? formatCurrency(data.totalCogsLost, currency) : '—', icon: TrendingDownIcon, color: '#dc2626', bg: '#fee2e2', subtitle: 'On returns' },
+  ];
 
   return (
-    <Grid container spacing={2}>
-      {cards.map(({ label, key, icon: Icon, color, bg, ...rest }) => {
-        const fromPnl = 'pnlKey' in rest && rest.pnlKey;
-        const loading = fromPnl ? pnlLoading : isLoading;
-        const valueColor = key === 'netProfit' && pnl
-          ? pnl.netProfit >= 0
-            ? 'success.main'
-            : 'error.main'
-          : color;
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Grid container spacing={2}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <MetricCard
+            label="TOTAL REVENUE"
+            subtitle="Sales in selected date range"
+            value={formatCurrency(revenue, currency)}
+            icon={CurrencyRupeeIcon}
+            iconColor="success.main"
+            iconBg="success.50"
+            valueColor="success.dark"
+            loading={isLoading}
+            featured
+            positive
+          />
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <MetricCard
+            label="NET PROFIT"
+            subtitle={pnl?.hasFinanceData ? `${pnl.netMargin.toFixed(1)}% net margin` : 'Sync finance for fee breakdown'}
+            value={pnl ? formatCurrency(netProfit, currency) : '—'}
+            icon={AccountBalanceWalletIcon}
+            iconColor={netProfit >= 0 ? 'primary.main' : 'error.main'}
+            iconBg={netProfit >= 0 ? '#e2e8f0' : 'error.50'}
+            valueColor={netProfit >= 0 ? 'primary.main' : 'error.dark'}
+            loading={pnlLoading}
+            featured
+            positive={netProfit >= 0}
+          />
+        </Grid>
+      </Grid>
 
-        return (
-          <Grid key={key} size={{ xs: 12, sm: 6, xl: 3 }}>
-            <Card variant="outlined">
-              <CardContent sx={{ py: 2, '&:last-child': { pb: 2 } }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <Typography variant="body2" color="text.secondary">
-                    {label}
-                  </Typography>
-                  <Avatar sx={{ bgcolor: bg, color, width: 32, height: 32 }}>
-                    <Icon sx={{ fontSize: 18 }} />
-                  </Avatar>
-                </Box>
-                {loading ? (
-                  <Skeleton width={80} height={36} sx={{ mt: 1 }} />
-                ) : (
-                  <Typography variant="h5" color={valueColor} sx={{ mt: 1, fontWeight: 700 }}>
-                    {values[key]}
-                  </Typography>
-                )}
-                {key === 'netProfit' && pnl && !pnl.hasFinanceData && !pnlLoading && (
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                    Sync finance data for fees
-                  </Typography>
-                )}
-              </CardContent>
-            </Card>
+      <Grid container spacing={1.5}>
+        {secondary.map(({ key, label, value, icon, color, bg, subtitle }) => (
+          <Grid key={key} size={{ xs: 6, sm: 3 }}>
+            <MetricCard
+              label={label}
+              value={value}
+              subtitle={subtitle}
+              icon={icon}
+              iconColor={color}
+              iconBg={bg}
+              loading={key === 'gross' ? pnlLoading : isLoading}
+            />
           </Grid>
-        );
-      })}
-    </Grid>
+        ))}
+      </Grid>
+    </Box>
   );
 }

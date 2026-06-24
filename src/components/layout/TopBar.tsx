@@ -8,9 +8,11 @@ import {
   IconButton,
   Button,
   Box,
+  Chip,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import LogoutIcon from '@mui/icons-material/Logout';
+import FilterListIcon from '@mui/icons-material/FilterList';
 import { useRouter } from 'next/navigation';
 import { clearToken, getRefreshToken } from '@/lib/auth';
 import api from '@/lib/api';
@@ -19,13 +21,13 @@ import { AccountSelector } from '@/components/shared/AccountSelector';
 import { SyncStatus } from '@/components/shared/SyncStatus';
 import { DateRangePicker } from '@/components/shared/DateRangePicker';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+
 interface TopBarProps {
   onMenuClick: () => void;
-  title: string;
   showFilters?: boolean;
 }
 
-export function TopBar({ onMenuClick, title, showFilters = true }: TopBarProps) {
+export function TopBar({ onMenuClick, showFilters = true }: TopBarProps) {
   const router = useRouter();
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -45,49 +47,64 @@ export function TopBar({ onMenuClick, title, showFilters = true }: TopBarProps) 
 
   return (
     <>
-    <AppBar
-      position="sticky"
-      elevation={0}
-      sx={{
-        bgcolor: 'background.paper',
-        color: 'text.primary',
-        borderBottom: 1,
-        borderColor: 'divider',
-        width: '100%',
-      }}
-    >
-      <Toolbar variant="dense" sx={{ gap: 1, minHeight: 48, flexWrap: 'wrap', py: 0.5 }}>
-        <IconButton edge="start" onClick={onMenuClick} sx={{ display: { lg: 'none' } }} size="small">
-          <MenuIcon fontSize="small" />
-        </IconButton>
-
-        <Typography variant="subtitle1"  sx={{ flex: 1, fontSize: '0.875rem', fontWeight: 600 }}>
-          {title}
-        </Typography>
-
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
-          {showFilters && (
-            <>
-              <AccountSelector />
-              <DateRangePicker />
-            </>
-          )}
-          <SyncStatus />
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<LogoutIcon sx={{ fontSize: 16 }} />}
-            onClick={() => setLogoutOpen(true)}
-            sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
-          >
-            Logout
-          </Button>
-          <IconButton onClick={() => setLogoutOpen(true)} size="small" sx={{ display: { sm: 'none' } }}>
-            <LogoutIcon fontSize="small" />
+      <AppBar
+        position="sticky"
+        elevation={0}
+        sx={{
+          bgcolor: 'background.paper',
+          color: 'text.primary',
+          borderBottom: 1,
+          borderColor: 'divider',
+          width: '100%',
+        }}
+      >
+        <Toolbar variant="dense" sx={{ gap: 1, minHeight: 44, flexWrap: 'wrap', py: 0.5 }}>
+          <IconButton edge="start" onClick={onMenuClick} sx={{ display: { lg: 'none' } }} size="small">
+            <MenuIcon fontSize="small" />
           </IconButton>
-        </Box>
-      </Toolbar>
-    </AppBar>
+
+          <Typography
+            variant="caption"
+            sx={{
+              display: { xs: 'block', lg: 'none' },
+              fontWeight: 700,
+              color: 'text.secondary',
+              letterSpacing: 0.5,
+            }}
+          >
+            SP Dashboard
+          </Typography>
+
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1, ml: 'auto' }}>
+            {showFilters && (
+              <>
+                <Chip
+                  icon={<FilterListIcon sx={{ fontSize: '14px !important' }} />}
+                  label="Filters"
+                  size="small"
+                  variant="outlined"
+                  sx={{ display: { xs: 'none', md: 'inline-flex' } }}
+                />
+                <AccountSelector />
+                <DateRangePicker />
+              </>
+            )}
+            <SyncStatus />
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<LogoutIcon sx={{ fontSize: 16 }} />}
+              onClick={() => setLogoutOpen(true)}
+              sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+            >
+              Logout
+            </Button>
+            <IconButton onClick={() => setLogoutOpen(true)} size="small" sx={{ display: { sm: 'none' } }}>
+              <LogoutIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        </Toolbar>
+      </AppBar>
 
       <ConfirmDialog
         open={logoutOpen}

@@ -2,19 +2,16 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Grid from '@mui/material/Grid';
 import { ColumnDef } from '@tanstack/react-table';
-import {
-  Box,
-  Grid,
-  Card,
-  CardContent,
-  Typography,
-  Skeleton,
-  Chip,
-} from '@mui/material';
+import { Box, Typography, Chip } from '@mui/material';
 import { useFinanceEvents, useFinancePnl } from '@/hooks/useFinance';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable } from '@/components/shared/DataTable';
+import { FinanceSummaryCards } from '@/components/finance/FinanceSummaryCards';
+import { FinanceWaterfall } from '@/components/finance/FinanceWaterfall';
+import { SectionCard } from '@/components/shared/SectionCard';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { getFinancialEventDisplay, formatEventType } from '@/lib/financeUtils';
 import { FinancialEvent } from '@/types';
@@ -39,7 +36,6 @@ const columns: ColumnDef<FinancialEvent, unknown>[] = [
         size="small"
         color="secondary"
         variant="outlined"
-        sx={{ '& .MuiChip-label': { fontSize: '0.6875rem' } }}
       />
     ),
   },
@@ -49,7 +45,7 @@ const columns: ColumnDef<FinancialEvent, unknown>[] = [
     cell: ({ row }) => {
       const { feeType } = getFinancialEventDisplay(row.original);
       return (
-        <Typography variant="caption" sx={{ fontSize: '0.75rem' }}>
+        <Typography variant="caption">
           {feeType}
         </Typography>
       );
@@ -59,7 +55,7 @@ const columns: ColumnDef<FinancialEvent, unknown>[] = [
     accessorKey: 'amazon_order_id',
     header: 'Order ID',
     cell: ({ getValue }) => (
-      <Typography variant="caption" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+      <Typography variant="caption">
         {(getValue() as string) || '—'}
       </Typography>
     ),
@@ -75,11 +71,10 @@ const columns: ColumnDef<FinancialEvent, unknown>[] = [
           variant="caption"
           sx={{
             fontWeight: 600,
-            fontSize: '0.75rem',
             color: num != null && num < 0 ? 'error.main' : num != null && num > 0 ? 'success.main' : 'text.primary',
           }}
         >
-          {formatCurrency(amount, currency)}
+          {formatCurrency(amount ?? null, currency)}
         </Typography>
       );
     },
@@ -98,97 +93,72 @@ export default function FinancePage() {
   const netProfitColor = (pnl?.netProfit ?? 0) >= 0 ? 'success.main' : 'error.main';
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+      <PageHeader
+        title="Finance"
+        description="Full profit & loss from Amazon financial events — fees, refunds, COGS, and margins"
+        formula={['Revenue', '− COGS', '− Fees', '− Refunds', '− COGS Lost', '= Net Profit']}
+      />
+
       <Grid container spacing={2}>
-        {[
-          {
-            label: 'Gross Revenue',
-            value: formatCurrency(pnl?.totalRevenue || 0, currency),
-            color: 'success.main',
-            loading: pnlLoading,
-          },
-          {
-            label: 'Amazon Fees',
-            value: formatCurrency(pnl?.totalFees || 0, currency),
-            color: 'warning.main',
-            loading: pnlLoading,
-          },
-          {
-            label: 'Net Profit',
-            value: formatCurrency(pnl?.netProfit || 0, currency),
-            color: netProfitColor,
-            loading: pnlLoading,
-            subtitle: pnl && !pnl.hasFinanceData ? 'Sync finance for fee breakdown' : 'Before product costs (COGS)',
-          },
-          {
-            label: 'Finance Events',
-            value: pnl?.eventCount ?? events?.pagination?.total ?? 0,
-            color: 'text.primary',
-            loading: pnlLoading || isLoading,
-            subtitle: 'Unique fee/charge lines (deduped)',
-          },
-        ].map(({ label, value, color, loading, subtitle }) => (
-          <Grid size={{ xs: 12, sm: 6, lg: 3 }} key={label}>
-            <Card variant="outlined">
-              <CardContent>
-                <Typography variant="body2" color="text.secondary">
-                  {label}
-                </Typography>
-                {loading ? (
-                  <Skeleton width={80} height={36} sx={{ mt: 1 }} />
-                ) : (
-                  <Typography variant="h5" color={color} sx={{ mt: 0.5, fontWeight: 700 }}>
-                    {value}
-                  </Typography>
-                )}
-                {subtitle && !loading && (
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                    {subtitle}
-                  </Typography>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
+        <Grid size={{ xs: 12, lg: 8 }}>
+          <FinanceSummaryCards pnl={pnl} isLoading={pnlLoading} />
+        </Grid>
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <Box sx={{ position: { lg: 'sticky' }, top: { lg: 16 } }}>
+            <FinanceWaterfall pnl={pnl} isLoading={pnlLoading} />
+          </Box>
+        </Grid>
       </Grid>
 
       {pnl?.events && pnl.events.length > 0 && (
-        <Card variant="outlined">
-          <CardContent>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', justifyContent: 'space-between', gap: 1, mb: 1.5 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                P&L Breakdown
-              </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 600, color: netProfitColor }}>
-                Net: {formatCurrency(pnl.netProfit, currency)}
-              </Typography>
-            </Box>
-            <Grid container spacing={1}>
-              {pnl.events.map((e, i) => {
-                const amount = parseFloat(e.total || '0');
-                const label = e.fee_type || formatEventType(e.event_type);
-                return (
-                  <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={i}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', bgcolor: 'grey.50', borderRadius: 1, px: 1.5, py: 1 }}>
-                      <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                        {label}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{ fontWeight: 600, fontSize: '0.75rem', color: amount < 0 ? 'error.main' : 'success.main' }}
-                      >
-                        {formatCurrency(e.total, e.currency)}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                );
-              })}
-            </Grid>
-          </CardContent>
-        </Card>
+        <SectionCard
+          title="P&L Breakdown"
+          subtitle="Aggregated fee and charge lines"
+          action={
+            <Typography variant="body2" sx={{ fontWeight: 600, color: netProfitColor }}>
+              Net: {formatCurrency(pnl.netProfit, currency)}
+            </Typography>
+          }
+        >
+          <Grid container spacing={1}>
+            {pnl.events.map((e, i) => {
+              const amount = typeof e.total === 'string' ? parseFloat(e.total) : e.total;
+              const label = e.fee_type || formatEventType(e.event_type);
+              return (
+                <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={i}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      bgcolor: 'grey.50',
+                      borderRadius: 1,
+                      px: 1.5,
+                      py: 1,
+                      border: 1,
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <Typography variant="caption" color="text.secondary">
+                      {label}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{ fontWeight: 600, color: amount < 0 ? 'error.main' : 'success.main' }}
+                    >
+                      {formatCurrency(e.total, e.currency)}
+                    </Typography>
+                  </Box>
+                </Grid>
+              );
+            })}
+          </Grid>
+        </SectionCard>
       )}
 
       <DataTable
+        title="Financial Events"
+        subtitle="Individual fee and charge lines from Amazon"
         data={events?.data || []}
         columns={columns}
         isLoading={isLoading}

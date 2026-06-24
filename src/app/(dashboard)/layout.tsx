@@ -4,18 +4,10 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Box, CircularProgress } from '@mui/material';
 import { isAuthenticated } from '@/lib/auth';
+import { clearToken } from '@/lib/auth';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TopBar } from '@/components/layout/TopBar';
 import { DRAWER_WIDTH } from '@/components/layout/constants';
-
-const pageTitles: Record<string, string> = {
-  '/dashboard': 'Dashboard',
-  '/accounts': 'Accounts',
-  '/orders': 'Orders',
-  '/inventory': 'Inventory',
-  '/finance': 'Finance',
-  '/products': 'Products',
-};
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -25,6 +17,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     if (!isAuthenticated()) {
+      // Prevent middleware redirect loop when auth cookie exists but session storage token is missing.
+      clearToken();
       router.replace('/login');
     } else {
       setReady(true);
@@ -33,17 +27,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (!ready) {
     return (
-      <Box sx={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center' }}>
+      <Box suppressHydrationWarning sx={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center' }}>
         <CircularProgress size={32} />
       </Box>
     );
   }
 
-  const title = pageTitles[pathname] || 'Dashboard';
   const showFilters = pathname !== '/accounts';
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+    <Box suppressHydrationWarning sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <Box
         sx={{
@@ -55,7 +48,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       >
         <TopBar
           onMenuClick={() => setSidebarOpen(true)}
-          title={title}
           showFilters={showFilters}
         />
         <Box component="main" sx={{ p: { xs: 2, lg: 3 } }}>

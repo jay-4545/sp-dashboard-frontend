@@ -4,6 +4,7 @@ import { Stack } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useFinancePnl } from '@/hooks/useFinance';
+import { PageHeader } from '@/components/shared/PageHeader';
 import { SummaryCards } from '@/components/dashboard/SummaryCards';
 import { RevenueChart } from '@/components/dashboard/RevenueChart';
 import { AccountBreakdown } from '@/components/dashboard/AccountBreakdown';
@@ -14,7 +15,12 @@ export default function DashboardPage() {
   const { data: pnl, isLoading: pnlLoading } = useFinancePnl();
 
   return (
-    <Stack spacing={3}>
+    <Stack spacing={2.5}>
+      <PageHeader
+        title="Dashboard"
+        description="Overview of revenue, profit, and performance across your Amazon India accounts"
+        formula={['Revenue', '− COGS', '− Fees', '− Refunds', '= Net Profit']}
+      />
       <SummaryCards data={data} isLoading={isLoading} pnl={pnl} pnlLoading={pnlLoading} />
       <RevenueChart data={data} isLoading={isLoading} />
       <Grid container spacing={2}>

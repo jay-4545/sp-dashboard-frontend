@@ -31,7 +31,9 @@ import {
   Chip,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+import TableRowsIcon from '@mui/icons-material/TableRows';
 import { PaginatedResponse } from '@/types';
+import { SectionCard } from '@/components/shared/SectionCard';
 
 export const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 
@@ -48,6 +50,8 @@ interface DataTableProps<T> {
   onSearchChange?: (value: string) => void;
   searchPlaceholder?: string;
   toolbar?: React.ReactNode;
+  title?: string;
+  subtitle?: string;
 }
 
 function getShowingRange(
@@ -73,6 +77,8 @@ export function DataTable<T>({
   onSearchChange,
   searchPlaceholder = 'Search...',
   toolbar,
+  title,
+  subtitle,
 }: DataTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -88,17 +94,17 @@ export function DataTable<T>({
   const showToolbar = onSearchChange || onLimitChange || toolbar;
   const showing = pagination ? getShowingRange(pagination, data.length) : null;
 
-  return (
-    <Stack spacing={1.5}>
+  const tableContent = (
+    <>
       {showToolbar && (
-        <Paper variant="outlined" sx={{ p: 1.5, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5 }}>
+        <Box sx={{ px: 2, py: 1.25, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5, borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
           {onSearchChange && (
             <TextField
               size="small"
               placeholder={searchPlaceholder}
               value={search ?? ''}
               onChange={(e) => onSearchChange(e.target.value)}
-              sx={{ width: { xs: 150, sm: 180 }, '& input': { fontSize: '0.75rem', py: 0.75 } }}
+              sx={{ width: { xs: 150, sm: 200 }, '& input': { py: 0.75 } }}
               slotProps={{
                 input: {
                   startAdornment: (
@@ -113,17 +119,16 @@ export function DataTable<T>({
           {toolbar}
           {onLimitChange && limit !== undefined && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.6875rem' }}>
+              <Typography variant="caption" color="text.secondary">
                 Show
               </Typography>
               <FormControl size="small" sx={{ minWidth: 90 }}>
                 <Select
                   value={String(limit)}
                   onChange={(e) => onLimitChange(Number(e.target.value))}
-                  sx={{ fontSize: '0.6875rem', '& .MuiSelect-select': { py: 0.5 } }}
                 >
                   {PAGE_SIZE_OPTIONS.map((n) => (
-                    <MenuItem key={n} value={String(n)} sx={{ fontSize: '0.6875rem' }}>
+                    <MenuItem key={n} value={String(n)}>
                       {n} / page
                     </MenuItem>
                   ))}
@@ -138,32 +143,32 @@ export function DataTable<T>({
               ) : (
                 <>
                   Showing {showing.start}–{showing.end} of {pagination.total}
-                  {data.length > 0 && ` · ${data.length} on this page`}
                 </>
               )}
             </Typography>
           )}
-        </Paper>
+        </Box>
       )}
 
-      <TableContainer component={Paper} variant="outlined">
-        {isLoading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 160 }}>
-            <CircularProgress size={28} />
-          </Box>
-        ) : !data.length ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 160 }}>
-            <Typography variant="body2" color="text.secondary">
-              {emptyMessage}
-            </Typography>
-          </Box>
-        ) : (
+      {isLoading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200, py: 4 }}>
+          <CircularProgress size={28} />
+        </Box>
+      ) : !data.length ? (
+        <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: 200, py: 4, px: 2, textAlign: 'center', gap: 1 }}>
+          <TableRowsIcon sx={{ fontSize: 32, color: 'text.disabled' }} />
+          <Typography variant="body2" color="text.secondary">
+            {emptyMessage}
+          </Typography>
+        </Box>
+      ) : (
+        <TableContainer>
           <Table size="small">
             <TableHead>
               {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
+                <TableRow key={headerGroup.id} sx={{ bgcolor: 'grey.50' }}>
                   {headerGroup.headers.map((header) => (
-                    <TableCell key={header.id}>
+                    <TableCell key={header.id} sx={{ borderBottom: 1, borderColor: 'divider' }}>
                       {header.column.getCanSort() ? (
                         <TableSortLabel
                           active={!!header.column.getIsSorted()}
@@ -181,8 +186,12 @@ export function DataTable<T>({
               ))}
             </TableHead>
             <TableBody>
-              {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} hover>
+              {table.getRowModel().rows.map((row, i) => (
+                <TableRow
+                  key={row.id}
+                  hover
+                  sx={{ bgcolor: i % 2 === 1 ? 'grey.50' : 'transparent', '&:hover': { bgcolor: 'action.hover' } }}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -192,11 +201,25 @@ export function DataTable<T>({
               ))}
             </TableBody>
           </Table>
-        )}
-      </TableContainer>
+        </TableContainer>
+      )}
+    </>
+  );
+
+  return (
+    <Stack spacing={1.5}>
+      {title ? (
+        <SectionCard title={title} subtitle={subtitle} noPadding>
+          {tableContent}
+        </SectionCard>
+      ) : (
+        <Paper variant="outlined" sx={{ overflow: 'hidden' }}>
+          {tableContent}
+        </Paper>
+      )}
 
       {pagination && pagination.totalPages > 0 && onPageChange && (
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 1, px: 0.5 }}>
           <Typography variant="caption" color="text.secondary">
             Page {pagination.page} of {pagination.totalPages}
           </Typography>
@@ -229,7 +252,7 @@ export function StatusBadge({ status }: { status: string | null }) {
       size="small"
       color={STATUS_COLORS[status || ''] || 'default'}
       variant="outlined"
-      sx={{ height: 20, fontSize: '0.6875rem' }}
+      sx={{ height: 20 }}
     />
   );
 }

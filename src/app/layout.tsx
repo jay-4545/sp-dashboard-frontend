@@ -1,13 +1,11 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import './globals.css';
 import { Providers } from '@/components/Providers';
-
-const inter = Inter({ subsets: ['latin'] });
+import { plusJakarta } from '@/theme/fonts';
 
 export const metadata: Metadata = {
-  title: 'Amazon Seller Dashboard',
-  description: 'Private Amazon SP-API dashboard for multi-account sellers',
+  title: 'Seller Dashboard — Amazon SP-API Profit Analytics',
+  description: 'Private Amazon SP-API dashboard for India sellers. Track orders, inventory, finance, COGS, and actual profit per product.',
 };
 
 export default function RootLayout({
@@ -16,8 +14,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" className={plusJakarta.variable} suppressHydrationWarning>
+      <body className={plusJakarta.className} suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>

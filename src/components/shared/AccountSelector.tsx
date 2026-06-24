@@ -15,17 +15,13 @@ export function AccountSelector() {
         onChange={(e) => setSelectedAccountId(e.target.value || null)}
         disabled={isLoading}
         displayEmpty
-        sx={{
-          fontSize: '0.6875rem',
-          bgcolor: 'background.paper',
-          '& .MuiSelect-select': { py: 0.5, fontSize: '0.6875rem' },
-        }}
+        sx={{ bgcolor: 'background.paper' }}
       >
-        <MenuItem value="" sx={{ fontSize: '0.6875rem' }}>
+        <MenuItem value="">
           <em>All Accounts</em>
         </MenuItem>
         {accounts?.map((account) => (
-          <MenuItem key={account.id} value={account.id} sx={{ fontSize: '0.6875rem' }}>
+          <MenuItem key={account.id} value={account.id}>
             {account.name}
           </MenuItem>
         ))}

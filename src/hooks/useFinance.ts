@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
-import { PaginatedResponse, FinancialEvent, FinancePnl, SyncJob } from '@/types';
+import { PaginatedResponse, FinancialEvent, FinancePnl, SyncJob, SyncType } from '@/types';
 import { useAccountStore } from '@/store/accountStore';
 import { useFilterStore } from '@/store/filterStore';
 
@@ -71,7 +71,7 @@ export function useSyncStatus() {
 export function useTriggerSync() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ accountId, syncType }: { accountId: string; syncType: string }) => {
+    mutationFn: async ({ accountId, syncType }: { accountId: string; syncType: SyncType }) => {
       const { data } = await api.post('/api/sync/trigger', { accountId, syncType });
       return data;
     },

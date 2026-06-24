@@ -18,7 +18,7 @@ export function useAccounts() {
 export function useCreateAccount() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (body: { name: string; marketplace_id: string; region: 'NA' | 'EU' | 'FE' | 'IN' }) => {
+    mutationFn: async (body: { name: string; marketplace_id: string; region: 'IN' }) => {
       const { data } = await api.post<SellerAccount>('/api/accounts', body);
       return data;
     },

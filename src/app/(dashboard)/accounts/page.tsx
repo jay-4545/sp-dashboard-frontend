@@ -17,12 +17,10 @@ import {
   Select,
   MenuItem,
   FormControl,
-  InputLabel,
   IconButton,
   Skeleton,
   CircularProgress,
   Divider,
-  Paper,
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import SyncIcon from '@mui/icons-material/Sync';
@@ -47,20 +45,19 @@ import { toast } from '@/store/toastStore';
 import { formatDateTime } from '@/lib/utils';
 import { useSearchParams } from 'next/navigation';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { SyncType } from '@/types';
 
-const MARKETPLACES = [
-  { id: 'ATVPDKIKX0DER', label: 'United States', region: 'NA' as const },
-  { id: 'A2EUQ1WTGCTBG2', label: 'Canada', region: 'NA' as const },
-  { id: 'A1AM78C64UM0Y8', label: 'Mexico', region: 'NA' as const },
-  { id: 'A1PA6795UKMFR9', label: 'Germany', region: 'EU' as const },
-  { id: 'A1RKKUPIHCS9HS', label: 'Spain', region: 'EU' as const },
-  { id: 'A21TJRUUN4KGV', label: 'India', region: 'IN' as const },
-];
+const INDIA_MARKETPLACE = {
+  id: 'A21TJRUUN4KGV',
+  label: 'Amazon India',
+  region: 'IN' as const,
+};
 
-const SYNC_TYPES = ['orders', 'inventory', 'finance', 'listings', 'reports'] as const;
+const SYNC_TYPES = ['orders', 'inventory', 'finance', 'listings', 'products', 'reports'] as const;
 
 function getMarketplaceLabel(marketplaceId: string) {
-  return MARKETPLACES.find((m) => m.id === marketplaceId)?.label ?? marketplaceId;
+  return marketplaceId === INDIA_MARKETPLACE.id ? INDIA_MARKETPLACE.label : marketplaceId;
 }
 
 function ConnectionBadge({
@@ -105,20 +102,13 @@ function ConnectionBadge({
   );
 }
 
-function InfoRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1 }}>
       <Typography variant="caption" color="text.secondary">
         {label}
       </Typography>
-      <Typography
-        variant="caption"
-        sx={{
-          fontWeight: 500,
-          textAlign: 'right',
-          ...(mono ? { fontFamily: 'monospace' } : {}),
-        }}
-      >
+      <Typography variant="caption" sx={{ fontWeight: 500, textAlign: 'right' }}>
         {value}
       </Typography>
     </Box>
@@ -140,8 +130,8 @@ function AccountsContent() {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
-  const [form, setForm] = useState({ name: '', marketplace_id: MARKETPLACES[0].id });
-  const [syncType, setSyncType] = useState<string>('orders');
+  const [form, setForm] = useState({ name: '', marketplace_id: INDIA_MARKETPLACE.id });
+  const [syncType, setSyncType] = useState<SyncType>('orders');
   const [syncConfirm, setSyncConfirm] = useState<{ accountId: string; accountName: string } | null>(null);
 
   useEffect(() => {
@@ -152,7 +142,7 @@ function AccountsContent() {
     if (error) toast(decodeURIComponent(error), 'error');
   }, [searchParams]);
 
-  const selectedMarketplace = MARKETPLACES.find((m) => m.id === form.marketplace_id)!;
+  const selectedMarketplace = INDIA_MARKETPLACE;
 
   const getLastSync = (accountId: string) =>
     syncData?.recentJobs?.find((j) => j.account_id === accountId);
@@ -167,7 +157,7 @@ function AccountsContent() {
       {
         onSuccess: () => {
           setShowModal(false);
-          setForm({ name: '', marketplace_id: MARKETPLACES[0].id });
+          setForm({ name: '', marketplace_id: INDIA_MARKETPLACE.id });
         },
       }
     );
@@ -197,38 +187,23 @@ function AccountsContent() {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-      <Paper
-        variant="outlined"
-        sx={{
-          px: 2,
-          py: 1.5,
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 1.5,
-          bgcolor: 'background.paper',
-        }}
-      >
-        <Box>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
-            Seller Accounts
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            Connect and manage up to 5 Amazon seller accounts · {accounts?.length || 0}/5 used
-          </Typography>
-        </Box>
-        {isAdmin && (accounts?.length || 0) < 5 && (
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<AddIcon sx={{ fontSize: 18 }} />}
-            onClick={() => setShowModal(true)}
-          >
-            Add Account
-          </Button>
-        )}
-      </Paper>
+      <PageHeader
+        title="Seller Accounts"
+        description={`Connect and manage up to 5 Amazon India seller accounts · ${accounts?.length || 0}/5 used`}
+        variant="light"
+        action={
+          isAdmin && (accounts?.length || 0) < 5 ? (
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon sx={{ fontSize: 18 }} />}
+              onClick={() => setShowModal(true)}
+            >
+              Add Account
+            </Button>
+          ) : undefined
+        }
+      />
 
       {isLoading ? (
         <Grid container spacing={2}>
@@ -294,7 +269,9 @@ function AccountsContent() {
                     height: '100%',
                     bgcolor: 'background.paper',
                     transition: 'border-color 0.2s, box-shadow 0.2s',
-                    '&:hover': { borderColor: 'primary.light', boxShadow: 1 },
+                    '&:hover': { borderColor: 'primary.light', boxShadow: 2 },
+                    borderLeft: 4,
+                    borderLeftColor: account.is_connected ? 'success.main' : 'grey.300',
                   }}
                 >
                   <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
@@ -331,7 +308,6 @@ function AccountsContent() {
                               variant="subtitle2"
                               sx={{
                                 fontWeight: 600,
-                                fontSize: '0.875rem',
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
                                 whiteSpace: 'nowrap',
@@ -358,7 +334,6 @@ function AccountsContent() {
                           color="text.secondary"
                           sx={{
                             mt: 0.25,
-                            fontFamily: 'monospace',
                             display: 'block',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
@@ -402,7 +377,6 @@ function AccountsContent() {
                       <InfoRow
                         label="Marketplace ID"
                         value={account.marketplace_id}
-                        mono
                       />
                       <InfoRow
                         label="Last synced"
@@ -486,11 +460,10 @@ function AccountsContent() {
                             <FormControl size="small" fullWidth>
                               <Select
                                 value={syncType}
-                                onChange={(e) => setSyncType(e.target.value)}
-                                sx={{ fontSize: '0.6875rem', '& .MuiSelect-select': { py: 0.5 } }}
+                                onChange={(e) => setSyncType(e.target.value as SyncType)}
                               >
                                 {SYNC_TYPES.map((t) => (
-                                  <MenuItem key={t} value={t} sx={{ fontSize: '0.6875rem' }}>
+                                  <MenuItem key={t} value={t}>
                                     {t}
                                   </MenuItem>
                                 ))}
@@ -533,33 +506,25 @@ function AccountsContent() {
       )}
 
       <Dialog open={showModal} onClose={() => setShowModal(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontSize: '0.9375rem', fontWeight: 600, pb: 1 }}>
-          Add Seller Account
-        </DialogTitle>
+        <DialogTitle>Add Seller Account</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 0.5 }}>
             <TextField
               label="Account name"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="My US Store"
+              placeholder="My India Store"
               fullWidth
               size="small"
             />
-            <FormControl fullWidth size="small">
-              <InputLabel>Marketplace</InputLabel>
-              <Select
-                label="Marketplace"
-                value={form.marketplace_id}
-                onChange={(e) => setForm({ ...form, marketplace_id: e.target.value })}
-              >
-                {MARKETPLACES.map((m) => (
-                  <MenuItem key={m.id} value={m.id}>
-                    {m.label} ({m.region})
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <TextField
+              label="Marketplace"
+              value={`${INDIA_MARKETPLACE.label} (${INDIA_MARKETPLACE.region})`}
+              fullWidth
+              size="small"
+              disabled
+              helperText="This dashboard supports Amazon India (A21TJRUUN4KGV) only"
+            />
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
